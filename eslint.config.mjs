@@ -10,7 +10,14 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...compat.extends("next/core-web-vitals", "plugin:prettier/recommended", "next/typescript"),
+  {
+    rules: {
+      // Add your custom rules here
+      "@typescript-eslint/no-explicit-any": "off",
+      // Add more rules as needed
+    },
+  },
 ];
 
 export default eslintConfig;
