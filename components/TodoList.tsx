@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import TodoItem from '@/components/TodoItem';
 import { Todo } from '@/types';
 
 const TodoList: React.FC = () => {
   const [userInput, setUserInput] = useState<string>('');
+  const [isPending, startTransition] = useTransition();
   const [list, setList] = useState<Todo[]>([]);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
@@ -19,68 +20,71 @@ const TodoList: React.FC = () => {
     setList(data);
   };
 
-  const handleAction = async () => {
+  const handleAction = () => {
     if (!userInput.trim()) return;
 
-    if (editIndex !== null) {
-      // Edit existing todo
-      const response = await fetch(`/api/todos/${list[editIndex].id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ value: userInput }),
-      });
+    startTransition(async () => {
+      if (editIndex !== null) {
+        // Edit existing todo
+        const response = await fetch(`/api/todos/${list[editIndex].id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: userInput }),
+        });
 
-      if (response.ok) {
-        setEditIndex(null);
-        setUserInput('');
-        fetchTodos();
+        if (response.ok) {
+          setEditIndex(null);
+          setUserInput('');
+          fetchTodos();
+        }
+      } else {
+        // Add new todo
+        const response = await fetch('/api/todos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ value: userInput }),
+        });
+
+        if (response.ok) {
+          setUserInput('');
+          fetchTodos();
+        }
       }
-    } else {
-      // Add new todo
-      const response = await fetch('/api/todos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ value: userInput }),
-      });
-
-      if (response.ok) {
-        setUserInput('');
-        fetchTodos();
-      }
-    }
-  };
-
-  const deleteItem = async (id: number) => {
-    const response = await fetch(`/api/todos/${id}`, {
-      method: 'DELETE',
     });
-
-    if (response.ok) {
-      fetchTodos();
-    }
   };
 
+  const deleteItem = (id: number) => {
+    startTransition(async () => {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchTodos();
+      }
+    });
+  };
   const toggleComplete = async (id: number) => {
     const todoToToggle = list.find((item) => item.id === id);
     if (!todoToToggle) return;
 
-    const response = await fetch(`/api/todos/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ completed: !todoToToggle.completed }),
-    });
+    startTransition(async () => {
+      const response = await fetch(`/api/todos/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ completed: !todoToToggle.completed }),
+      });
 
-    if (response.ok) {
-      fetchTodos();
-    } else {
-      console.error('Failed to toggle todo');
-    }
+      if (response.ok) {
+        fetchTodos();
+      }
+    });
   };
 
   const startEdit = (index: number) => {
@@ -113,6 +117,7 @@ const TodoList: React.FC = () => {
           {editIndex !== null ? 'Update' : 'ADD'}
         </button>
       </div>
+      {isPending && <div className="text-center text-lg text-gray-500">Loading...</div>}
       <div className="rounded-md bg-gray-100 p-4">
         {list.length > 0 ? (
           list.map((item, index) => (
