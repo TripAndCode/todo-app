@@ -11,7 +11,9 @@ const TodoList: React.FC = () => {
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchTodos();
+    startTransition(() => {
+      fetchTodos();
+    });
   }, []);
 
   const fetchTodos = async () => {
