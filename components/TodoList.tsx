@@ -96,7 +96,7 @@ const TodoList: React.FC = () => {
 
   return (
     <div className="mx-auto max-w-md">
-      <h1 className="mb-4 text-center text-4xl font-bold text-green-600">Geeksforgeeks</h1>
+      <h1 className="mb-4 text-center text-4xl font-bold text-green-600">TODO APP</h1>
       <h2 className="mb-6 text-center text-2xl font-bold">TODO LIST</h2>
       <div className="mb-4 flex">
         <input
